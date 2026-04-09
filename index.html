@@ -442,6 +442,97 @@
     @keyframes toastIn  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
 
+    /* ─── PIN LOCK SCREEN ─── */
+    #pinScreen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px 32px;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .pin-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 34px; font-weight: 300;
+      color: var(--gold2); letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+
+    .pin-sub {
+      font-size: 11px; letter-spacing: 0.25em;
+      text-transform: uppercase; color: var(--text3);
+      margin-bottom: 48px;
+    }
+
+    .pin-label {
+      font-size: 11px; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--text3);
+      margin-bottom: 16px;
+    }
+
+    .pin-dots {
+      display: flex; gap: 14px; margin-bottom: 36px;
+    }
+
+    .pin-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 1.5px solid var(--border2);
+      background: transparent;
+      transition: all 0.2s;
+    }
+
+    .pin-dot.filled {
+      background: var(--gold);
+      border-color: var(--gold);
+      transform: scale(1.1);
+    }
+
+    .pin-dot.error {
+      background: var(--danger);
+      border-color: var(--danger);
+      animation: shake 0.4s ease;
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-6px); }
+      40%      { transform: translateX(6px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(4px); }
+    }
+
+    .pin-keypad {
+      display: grid; grid-template-columns: repeat(3, 72px);
+      gap: 14px;
+    }
+
+    .pin-key {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: var(--bg2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'Jost', sans-serif;
+      font-size: 22px; font-weight: 300;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.15s;
+      user-select: none;
+    }
+
+    .pin-key:active { background: var(--gold-dim); border-color: var(--gold); transform: scale(0.95); }
+    .pin-key.del { font-size: 14px; color: var(--text3); }
+    .pin-key.empty { background: transparent; border-color: transparent; cursor: default; }
+
+    .pin-error-msg {
+      margin-top: 20px; font-size: 12px;
+      color: var(--danger); letter-spacing: 0.1em;
+      min-height: 18px; text-align: center;
+    }
+
+    .pin-setup-note {
+      margin-top: 24px; font-size: 11px;
+      color: var(--text3); text-align: center; line-height: 1.6;
+      max-width: 260px;
+    }
+
     /* ─── SCROLL ─── */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -476,6 +567,37 @@
   </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════ PIN LOCK SCREEN ═══════════════════════════════ -->
+<div id="pinScreen">
+  <div class="pin-logo">Watch Vault</div>
+  <div class="pin-sub" id="pinSubtitle">Collezione Personale</div>
+  <div class="pin-label" id="pinLabel">Inserisci PIN</div>
+  <div class="pin-dots" id="pinDots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-keypad">
+    <div class="pin-key" onclick="pinKey('1')">1</div>
+    <div class="pin-key" onclick="pinKey('2')">2</div>
+    <div class="pin-key" onclick="pinKey('3')">3</div>
+    <div class="pin-key" onclick="pinKey('4')">4</div>
+    <div class="pin-key" onclick="pinKey('5')">5</div>
+    <div class="pin-key" onclick="pinKey('6')">6</div>
+    <div class="pin-key" onclick="pinKey('7')">7</div>
+    <div class="pin-key" onclick="pinKey('8')">8</div>
+    <div class="pin-key" onclick="pinKey('9')">9</div>
+    <div class="pin-key empty"></div>
+    <div class="pin-key" onclick="pinKey('0')">0</div>
+    <div class="pin-key del" onclick="pinDel()">⌫</div>
+  </div>
+  <div class="pin-error-msg" id="pinError"></div>
+  <div class="pin-setup-note" id="pinSetupNote" style="display:none">
+    Primo accesso: scegli un PIN di 4 cifre.<br>Lo userai ogni volta per aprire l'app.
+  </div>
+</div>
 
 <header>
   <div class="logo">
@@ -664,7 +786,14 @@
         </div>
       </div>
 
-      <button class="btn btn-ghost" style="width:100%" onclick="closeModal('driveModal')">Chiudi</button>
+      <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:4px;">
+        <div style="font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--text3); margin-bottom:10px;">Sicurezza</div>
+        <button class="btn btn-ghost" style="width:100%" onclick="changePin()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Cambia PIN di accesso
+        </button>
+      </div>
+      <button class="btn btn-ghost" style="width:100%; margin-top:8px" onclick="closeModal('driveModal')">Chiudi</button>
     </div>
   </div>
 </div>
@@ -975,6 +1104,106 @@ function toast(msg, type='') {
 }
 
 // ─────────────────────────────────────────────
+//  PIN LOCK
+// ─────────────────────────────────────────────
+const PIN_KEY = 'wv_pin';
+let pinBuffer = '';
+let pinMode = 'unlock'; // 'setup' | 'confirm' | 'unlock'
+let pinFirst = '';
+
+function pinInit() {
+  const stored = localStorage.getItem(PIN_KEY);
+  if (!stored) {
+    pinMode = 'setup';
+    document.getElementById('pinLabel').textContent = 'Scegli un PIN di 4 cifre';
+    document.getElementById('pinSetupNote').style.display = 'block';
+    document.getElementById('pinSubtitle').textContent = 'Primo accesso';
+  } else {
+    pinMode = 'unlock';
+    document.getElementById('pinLabel').textContent = 'Inserisci PIN';
+  }
+}
+
+function pinKey(digit) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += digit;
+  updatePinDots();
+  if (pinBuffer.length === 4) setTimeout(pinSubmit, 120);
+}
+
+function pinDel() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+}
+
+function updatePinDots(state='') {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('pd' + i);
+    d.className = 'pin-dot';
+    if (i < pinBuffer.length) d.classList.add(state || 'filled');
+  }
+}
+
+function pinSubmit() {
+  if (pinMode === 'setup') {
+    pinFirst = pinBuffer;
+    pinBuffer = '';
+    pinMode = 'confirm';
+    document.getElementById('pinLabel').textContent = 'Conferma il PIN';
+    document.getElementById('pinSetupNote').style.display = 'none';
+    updatePinDots();
+    return;
+  }
+  if (pinMode === 'confirm') {
+    if (pinBuffer === pinFirst) {
+      // Hash semplice (non crittografico, ma offre oscuramento base)
+      const h = btoa(pinBuffer + '_wv_salt_2024');
+      localStorage.setItem(PIN_KEY, h);
+      pinUnlock();
+    } else {
+      pinError('I PIN non coincidono');
+      pinMode = 'setup';
+      pinFirst = '';
+      document.getElementById('pinLabel').textContent = 'Scegli un PIN di 4 cifre';
+      document.getElementById('pinSetupNote').style.display = 'block';
+    }
+    return;
+  }
+  if (pinMode === 'unlock') {
+    const stored = localStorage.getItem(PIN_KEY);
+    const h = btoa(pinBuffer + '_wv_salt_2024');
+    if (h === stored) {
+      pinUnlock();
+    } else {
+      pinError('PIN errato');
+    }
+  }
+}
+
+function pinError(msg) {
+  updatePinDots('error');
+  document.getElementById('pinError').textContent = msg;
+  setTimeout(() => {
+    pinBuffer = '';
+    updatePinDots();
+  }, 600);
+}
+
+function pinUnlock() {
+  const screen = document.getElementById('pinScreen');
+  screen.style.opacity = '0';
+  screen.style.transition = 'opacity 0.3s ease';
+  setTimeout(() => screen.style.display = 'none', 300);
+}
+
+// Cambia PIN dall'interno dell'app (accessibile dal pannello Drive)
+function changePin() {
+  localStorage.removeItem(PIN_KEY);
+  location.reload();
+}
+
+// ─────────────────────────────────────────────
 //  SERVICE WORKER REGISTRATION
 // ─────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
@@ -984,6 +1213,7 @@ if ('serviceWorker' in navigator) {
 // ─────────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────────
+pinInit();
 refresh();
 </script>
 </body>
