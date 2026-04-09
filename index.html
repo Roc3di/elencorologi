@@ -1057,7 +1057,73 @@ function driveSignIn() {
   });
   tokenClient.requestAccessToken();
 }
-  // Per implementare: seguire README.md allegato per configurare OAuth2
+
+let driveToken = null;
+const DRIVE_FILE_NAME = 'watchvault_backup.json';
+
+async function driveBackup() {
+  if (!driveToken) { toast('Prima accedi a Google Drive', 'error'); return; }
+  try {
+    const data = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), watches }, null, 2);
+    // Cerca file esistente
+    const search = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}'&spaces=drive&fields=files(id,name)`,
+      { headers: { Authorization: `Bearer ${driveToken}` } }
+    );
+    const found = await search.json();
+    const fileId = found.files?.[0]?.id;
+
+    if (fileId) {
+      // Aggiorna file esistente
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${driveToken}`, 'Content-Type': 'application/json' },
+        body: data
+      });
+    } else {
+      // Crea nuovo file
+      const meta = new Blob([JSON.stringify({ name: DRIVE_FILE_NAME, mimeType: 'application/json' })], { type: 'application/json' });
+      const content = new Blob([data], { type: 'application/json' });
+      const form = new FormData();
+      form.append('metadata', meta);
+      form.append('file', content);
+      await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${driveToken}` },
+        body: form
+      });
+    }
+    toast('Backup salvato su Drive ✓', 'success');
+  } catch(e) {
+    toast('Errore durante il backup', 'error');
+  }
+}
+
+async function driveRestore() {
+  if (!driveToken) { toast('Prima accedi a Google Drive', 'error'); return; }
+  try {
+    const search = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}'&spaces=drive&fields=files(id,name)`,
+      { headers: { Authorization: `Bearer ${driveToken}` } }
+    );
+    const found = await search.json();
+    const fileId = found.files?.[0]?.id;
+    if (!fileId) { toast('Nessun backup trovato su Drive', 'error'); return; }
+
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: { Authorization: `Bearer ${driveToken}` }
+    });
+    const parsed = await res.json();
+    const incoming = parsed.watches || (Array.isArray(parsed) ? parsed : null);
+    if (!incoming) throw new Error();
+    if (!confirm(`Ripristinare ${incoming.length} orologi da Drive? I dati attuali verranno sostituiti.`)) return;
+    watches = incoming;
+    refresh();
+    closeModal('driveModal');
+    toast(`${incoming.length} orologi ripristinati ✓`, 'success');
+  } catch(e) {
+    toast('Errore durante il ripristino', 'error');
+  }
 }
 
 // ─────────────────────────────────────────────
