@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Watch Vault" />
+  <title>Watch Vault</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg2: #111111;
+      --bg3: #1a1a1a;
+      --border: #2a2a2a;
+      --border2: #3a3a3a;
+      --gold: #c9a96e;
+      --gold2: #e8c990;
+      --gold-dim: rgba(201,169,110,0.15);
+      --text: #e8e0d0;
+      --text2: #8a8070;
+      --text3: #5a5248;
+      --danger: #c0544a;
+      --success: #4a8c6a;
+      --radius: 12px;
+      --shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── GRAIN OVERLAY ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .logo {
+      display: flex; align-items: baseline; gap: 10px;
+    }
+
+    .logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px; font-weight: 300;
+      letter-spacing: 0.08em;
+      color: var(--gold2);
+    }
+
+    .logo-sub {
+      font-size: 10px; letter-spacing: 0.25em;
+      text-transform: uppercase; color: var(--text3);
+      font-weight: 400;
+    }
+
+    .header-actions { display: flex; gap: 8px; }
+
+    /* ─── BUTTONS ─── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 6px;
+      font-family: 'Jost', sans-serif; font-size: 12px;
+      font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase;
+      border: none; cursor: pointer; transition: all 0.2s;
+    }
+
+    .btn-gold {
+      background: var(--gold); color: #0a0a0a;
+    }
+    .btn-gold:hover { background: var(--gold2); transform: translateY(-1px); }
+    .btn-gold:active { transform: translateY(0); }
+
+    .btn-ghost {
+      background: transparent; color: var(--text2);
+      border: 1px solid var(--border2);
+    }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+    .btn-icon {
+      width: 38px; height: 38px; padding: 0;
+      justify-content: center; border-radius: 8px;
+      background: var(--bg3); color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .btn-icon:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-icon svg { width: 16px; height: 16px; }
+
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #d4635a; }
+
+    /* ─── MAIN ─── */
+    main { position: relative; z-index: 1; padding: 20px; max-width: 800px; margin: 0 auto; }
+
+    /* ─── STATS BAR ─── */
+    .stats-bar {
+      display: flex; gap: 12px; margin-bottom: 24px;
+    }
+
+    .stat-card {
+      flex: 1; background: var(--bg2);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px 16px;
+      transition: border-color 0.2s;
+    }
+    .stat-card:hover { border-color: var(--border2); }
+
+    .stat-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px; color: var(--gold);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 10px; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--text3);
+      margin-top: 4px;
+    }
+
+    /* ─── SEARCH ─── */
+    .search-wrap {
+      position: relative; margin-bottom: 20px;
+    }
+
+    .search-wrap svg {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; color: var(--text3);
+    }
+
+    input[type="search"], input[type="text"], input[type="number"],
+    textarea, select {
+      width: 100%;
+      background: var(--bg2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'Jost', sans-serif;
+      font-size: 14px; font-weight: 300;
+      border-radius: 8px; padding: 12px 14px;
+      outline: none; transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+
+    input[type="search"] { padding-left: 42px; }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--gold);
+    }
+
+    select option { background: var(--bg2); }
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* ─── WATCH GRID ─── */
+    .watch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .watch-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      cursor: pointer; transition: all 0.25s;
+      animation: fadeIn 0.4s ease both;
+    }
+    .watch-card:hover {
+      border-color: var(--gold);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-photo {
+      width: 100%; aspect-ratio: 1;
+      background: var(--bg3);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; position: relative;
+    }
+
+    .card-photo img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .watch-card:hover .card-photo img { transform: scale(1.04); }
+
+    .card-photo-placeholder {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px; color: var(--text3);
+    }
+    .card-photo-placeholder svg { width: 36px; height: 36px; opacity: 0.4; }
+    .card-photo-placeholder span {
+      font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    }
+
+    .card-body { padding: 14px; }
+
+    .card-brand {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px; font-weight: 400; color: var(--gold);
+      letter-spacing: 0.04em;
+    }
+
+    .card-model {
+      font-size: 13px; color: var(--text); margin-top: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .card-meta {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 10px;
+    }
+
+    .badge {
+      font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 4px;
+      background: var(--gold-dim); color: var(--gold);
+      border: 1px solid rgba(201,169,110,0.2);
+    }
+
+    .badge-type {
+      background: rgba(90,90,120,0.2); color: #aaa;
+      border-color: rgba(90,90,120,0.3);
+    }
+
+    .battery-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--gold); margin-left: auto; flex-shrink: 0;
+    }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state {
+      text-align: center; padding: 80px 20px;
+      color: var(--text3);
+    }
+
+    .empty-state svg {
+      width: 64px; height: 64px; margin-bottom: 20px;
+      opacity: 0.2;
+    }
+
+    .empty-state h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-weight: 300;
+      color: var(--text2); margin-bottom: 8px;
+    }
+
+    .empty-state p { font-size: 13px; line-height: 1.6; }
+
+    /* ─── MODAL ─── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: flex-end;
+      animation: overlayIn 0.2s ease;
+    }
+    @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      width: 100%; max-width: 600px; margin: 0 auto;
+      background: var(--bg2); border-radius: 20px 20px 0 0;
+      border: 1px solid var(--border); border-bottom: none;
+      max-height: 92vh; overflow-y: auto;
+      animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    .modal-handle {
+      width: 40px; height: 4px;
+      background: var(--border2); border-radius: 2px;
+      margin: 14px auto 0;
+    }
+
+    .modal-header {
+      padding: 20px 24px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-weight: 300;
+      color: var(--gold);
+    }
+
+    .modal-body { padding: 24px; }
+
+    /* ─── FORM ─── */
+    .form-group { margin-bottom: 18px; }
+
+    .form-label {
+      display: block; font-size: 10px;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--text3); margin-bottom: 7px;
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ─── PHOTO UPLOAD ─── */
+    .photo-upload {
+      width: 100%; aspect-ratio: 16/9;
+      background: var(--bg3); border: 1.5px dashed var(--border2);
+      border-radius: var(--radius);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px; cursor: pointer; overflow: hidden;
+      transition: border-color 0.2s;
+      position: relative;
+    }
+    .photo-upload:hover { border-color: var(--gold); }
+    .photo-upload input[type="file"] {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .photo-upload img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .photo-upload-hint { color: var(--text3); text-align: center; }
+    .photo-upload-hint svg { width: 28px; height: 28px; margin-bottom: 4px; }
+    .photo-upload-hint span { font-size: 12px; display: block; }
+
+    /* ─── DETAIL VIEW ─── */
+    .detail-photo {
+      width: 100%; aspect-ratio: 4/3;
+      background: var(--bg3); overflow: hidden;
+    }
+    .detail-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+    .detail-section { padding: 20px 24px; }
+
+    .detail-brand {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px; font-weight: 300;
+      color: var(--gold); letter-spacing: 0.06em;
+    }
+
+    .detail-model {
+      font-size: 16px; color: var(--text2); margin-top: 4px;
+    }
+
+    .detail-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; margin-top: 20px;
+    }
+
+    .detail-item {
+      background: var(--bg3); border-radius: 8px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+    }
+
+    .detail-item-label {
+      font-size: 10px; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--text3); margin-bottom: 4px;
+    }
+
+    .detail-item-value { font-size: 15px; color: var(--text); }
+
+    .detail-notes {
+      margin-top: 12px;
+      background: var(--bg3); border-radius: 8px;
+      padding: 14px; border: 1px solid var(--border);
+      font-size: 14px; line-height: 1.7; color: var(--text2);
+    }
+
+    .detail-actions {
+      display: flex; gap: 10px; padding: 16px 24px 32px;
+    }
+
+    /* ─── DRIVE PANEL ─── */
+    .drive-panel {
+      background: var(--bg3); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .drive-status {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .drive-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--text3);
+      transition: background 0.3s;
+    }
+    .drive-dot.connected { background: var(--success); }
+
+    .drive-info { flex: 1; }
+    .drive-name { font-size: 14px; color: var(--text); }
+    .drive-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    .drive-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ─── TOAST ─── */
+    .toast-container {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%); z-index: 999;
+      display: flex; flex-direction: column; gap: 8px;
+      align-items: center; pointer-events: none;
+    }
+
+    .toast {
+      background: var(--bg3); border: 1px solid var(--border2);
+      color: var(--text); font-size: 13px;
+      padding: 10px 20px; border-radius: 100px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s both;
+      white-space: nowrap;
+    }
+    .toast.success { border-color: var(--success); color: #6dbf94; }
+    .toast.error   { border-color: var(--danger);  color: #e07b74; }
+
+    @keyframes toastIn  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+
+    /* ─── SCROLL ─── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 480px) {
+      .watch-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .stats-bar { gap: 8px; }
+      .stat-value { font-size: 22px; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    /* ─── TABS ─── */
+    .tabs {
+      display: flex; gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      padding: 10px 18px; font-size: 12px;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--text3); cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s; background: none; border-top: none;
+      border-left: none; border-right: none;
+      font-family: 'Jost', sans-serif; font-weight: 400;
+    }
+    .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .tab:hover:not(.active) { color: var(--text2); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div>
+      <div class="logo-text">Watch Vault</div>
+      <div class="logo-sub">Collezione Personale</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn-icon btn" onclick="openDrivePanel()" title="Google Drive">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6.28 3l5.72 9.9L6.28 22H1.5L7.22 12.9 1.5 3zM8.5 3h7l5.72 9.9L16 18H8l5.72-9.9zM22.5 22h-4.78l-2.86-4.1 5.78-9.9 2 3.46z"/>
+      </svg>
+    </button>
+    <button class="btn btn-gold" onclick="openAddModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Aggiungi
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- STATS -->
+  <div class="stats-bar" id="statsBar"></div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="filterBy('all', this)">Tutti</button>
+    <button class="tab" onclick="filterBy('analogico', this)">Analogici</button>
+    <button class="tab" onclick="filterBy('digitale', this)">Digitali</button>
+    <button class="tab" onclick="filterBy('smartwatch', this)">Smart</button>
+    <button class="tab" onclick="filterBy('da tasca', this)">Da tasca</button>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input type="search" id="searchInput" placeholder="Cerca per marca, modello, batteria…" oninput="renderWatches()" />
+  </div>
+
+  <!-- GRID -->
+  <div class="watch-grid" id="watchGrid"></div>
+</main>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══════════════════════════════ MODAL AGGIUNGI/MODIFICA ═══════════════════════════════ -->
+<div class="modal-overlay" id="addModal" style="display:none" onclick="closeOnOverlay(event,'addModal')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="addModalTitle">Nuovo Orologio</div>
+      <button class="btn btn-ghost" onclick="closeModal('addModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- FOTO -->
+      <div class="form-group">
+        <label class="form-label">Fotografia</label>
+        <div class="photo-upload" id="photoUploadArea">
+          <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handlePhoto(this)" />
+          <div class="photo-upload-hint" id="photoHint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <span>Tocca per scattare o selezionare</span>
+          </div>
+          <img id="photoPreview" src="" style="display:none; width:100%; height:100%; object-fit:cover;" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Marca</label>
+          <input type="text" id="f_brand" placeholder="es. Seiko, Omega…" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Modello</label>
+          <input type="text" id="f_model" placeholder="es. Submariner 300" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tipo</label>
+          <select id="f_type">
+            <option value="analogico">Analogico</option>
+            <option value="digitale">Digitale</option>
+            <option value="smartwatch">Smartwatch</option>
+            <option value="da tasca">Da tasca</option>
+            <option value="cronografo">Cronografo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Batteria</label>
+          <input type="text" id="f_battery" placeholder="es. SR626SW, CR2032…" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Anno acquisto</label>
+          <input type="number" id="f_year" placeholder="2024" min="1900" max="2099" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valore stimato (€)</label>
+          <input type="number" id="f_value" placeholder="0" min="0" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Note</label>
+        <textarea id="f_notes" placeholder="Condizioni, storia, revisioni, aneddoti…"></textarea>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal('addModal')">Annulla</button>
+        <button class="btn btn-gold" style="flex:2" onclick="saveWatch()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Salva Orologio
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ MODAL DETTAGLIO ═══════════════════════════════ -->
+<div class="modal-overlay" id="detailModal" style="display:none" onclick="closeOnOverlay(event,'detailModal')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ MODAL DRIVE ═══════════════════════════════ -->
+<div class="modal-overlay" id="driveModal" style="display:none" onclick="closeOnOverlay(event,'driveModal')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">Google Drive Backup</div>
+      <button class="btn btn-ghost" onclick="closeModal('driveModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="drive-panel">
+        <div class="drive-status">
+          <div class="drive-dot" id="driveDot"></div>
+          <div class="drive-info">
+            <div class="drive-name" id="driveStatusName">Non connesso</div>
+            <div class="drive-sub" id="driveStatusSub">Accedi con Google per abilitare il backup</div>
+          </div>
+        </div>
+        <div class="drive-actions" id="driveActions">
+          <button class="btn btn-gold" onclick="driveSignIn()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6.28 3l5.72 9.9L6.28 22H1.5L7.22 12.9 1.5 3zM8.5 3h7l5.72 9.9L16 18H8l5.72-9.9zM22.5 22h-4.78l-2.86-4.1 5.78-9.9 2 3.46z"/>
+            </svg>
+            Accedi con Google
+          </button>
+        </div>
+      </div>
+
+      <p style="font-size:12px; color:var(--text3); line-height:1.7; margin-bottom:16px;">
+        Il backup salva tutti i dati degli orologi (comprese le foto) in un file JSON
+        nella tua Google Drive. Puoi ripristinare in qualsiasi momento.<br><br>
+        <strong style="color:var(--text2);">Nota:</strong> Per usare la funzione Drive devi configurare
+        il tuo Client ID Google OAuth 2.0 nel file <code style="color:var(--gold)">config.js</code>.
+        Vedi le istruzioni nel file README allegato.
+      </p>
+
+      <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:16px;">
+        <div style="font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--text3); margin-bottom:10px;">Backup/Restore manuale (JSON)</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-ghost" onclick="exportJSON()" style="flex:1">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Esporta JSON
+          </button>
+          <label class="btn btn-ghost" style="flex:1; cursor:pointer; text-align:center;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Importa JSON
+            <input type="file" accept=".json" style="display:none" onchange="importJSON(this)" />
+          </label>
+        </div>
+      </div>
+
+      <button class="btn btn-ghost" style="width:100%" onclick="closeModal('driveModal')">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+let watches = JSON.parse(localStorage.getItem('watchVault') || '[]');
+let currentFilter = 'all';
+let editingId = null;
+let currentPhoto = null;
+
+// ─────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────
+function renderWatches() {
+  const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  let filtered = watches.filter(w => {
+    const matchFilter = currentFilter === 'all' || w.type === currentFilter;
+    const matchSearch = !q ||
+      w.brand.toLowerCase().includes(q) ||
+      w.model.toLowerCase().includes(q) ||
+      (w.battery || '').toLowerCase().includes(q) ||
+      (w.notes || '').toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+
+  const grid = document.getElementById('watchGrid');
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <h3>Nessun orologio trovato</h3>
+        <p>Aggiungi il tuo primo orologio<br>toccando il pulsante "Aggiungi".</p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map((w, i) => `
+    <div class="watch-card" onclick="openDetail('${w.id}')" style="animation-delay:${i*0.05}s">
+      <div class="card-photo">
+        ${w.photo
+          ? `<img src="${w.photo}" alt="${w.brand}" loading="lazy" />`
+          : `<div class="card-photo-placeholder">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+               <span>Nessuna foto</span>
+             </div>`}
+      </div>
+      <div class="card-body">
+        <div class="card-brand">${w.brand || '—'}</div>
+        <div class="card-model">${w.model || 'Modello sconosciuto'}</div>
+        <div class="card-meta">
+          ${w.battery ? `<span class="badge">${w.battery}</span>` : ''}
+          <span class="badge badge-type">${w.type || 'analogico'}</span>
+          ${w.battery ? '<div class="battery-dot"></div>' : ''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderStats() {
+  const total = watches.length;
+  const brands = new Set(watches.map(w => w.brand).filter(Boolean)).size;
+  const totalValue = watches.reduce((s, w) => s + (parseFloat(w.value) || 0), 0);
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Orologi</div></div>
+    <div class="stat-card"><div class="stat-value">${brands}</div><div class="stat-label">Marche</div></div>
+    <div class="stat-card"><div class="stat-value">€${totalValue > 0 ? totalValue.toLocaleString('it') : '—'}</div><div class="stat-label">Valore</div></div>`;
+}
+
+function refresh() {
+  renderStats();
+  renderWatches();
+  save();
+}
+
+// ─────────────────────────────────────────────
+//  FILTER
+// ─────────────────────────────────────────────
+function filterBy(type, btn) {
+  currentFilter = type;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderWatches();
+}
+
+// ─────────────────────────────────────────────
+//  ADD / EDIT MODAL
+// ─────────────────────────────────────────────
+function openAddModal() {
+  editingId = null;
+  currentPhoto = null;
+  document.getElementById('addModalTitle').textContent = 'Nuovo Orologio';
+  ['f_brand','f_model','f_battery','f_notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f_type').value = 'analogico';
+  document.getElementById('f_year').value = '';
+  document.getElementById('f_value').value = '';
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoHint').style.display = 'flex';
+  document.getElementById('addModal').style.display = 'flex';
+}
+
+function openEditModal(id) {
+  const w = watches.find(x => x.id === id);
+  if (!w) return;
+  closeModal('detailModal');
+  editingId = id;
+  currentPhoto = w.photo || null;
+  document.getElementById('addModalTitle').textContent = 'Modifica Orologio';
+  document.getElementById('f_brand').value = w.brand || '';
+  document.getElementById('f_model').value = w.model || '';
+  document.getElementById('f_battery').value = w.battery || '';
+  document.getElementById('f_notes').value = w.notes || '';
+  document.getElementById('f_type').value = w.type || 'analogico';
+  document.getElementById('f_year').value = w.year || '';
+  document.getElementById('f_value').value = w.value || '';
+  if (w.photo) {
+    document.getElementById('photoPreview').src = w.photo;
+    document.getElementById('photoPreview').style.display = 'block';
+    document.getElementById('photoHint').style.display = 'none';
+  } else {
+    document.getElementById('photoPreview').style.display = 'none';
+    document.getElementById('photoHint').style.display = 'flex';
+  }
+  document.getElementById('addModal').style.display = 'flex';
+}
+
+function handlePhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      // Resize to max 800px
+      const canvas = document.createElement('canvas');
+      const max = 800;
+      let w = img.width, h = img.height;
+      if (w > h && w > max) { h = h * max / w; w = max; }
+      else if (h > max) { w = w * max / h; h = max; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      currentPhoto = canvas.toDataURL('image/jpeg', 0.82);
+      document.getElementById('photoPreview').src = currentPhoto;
+      document.getElementById('photoPreview').style.display = 'block';
+      document.getElementById('photoHint').style.display = 'none';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveWatch() {
+  const brand = document.getElementById('f_brand').value.trim();
+  const model = document.getElementById('f_model').value.trim();
+  if (!brand && !model) { toast('Inserisci almeno marca o modello', 'error'); return; }
+
+  const data = {
+    brand, model,
+    type: document.getElementById('f_type').value,
+    battery: document.getElementById('f_battery').value.trim(),
+    year: document.getElementById('f_year').value,
+    value: document.getElementById('f_value').value,
+    notes: document.getElementById('f_notes').value.trim(),
+    photo: currentPhoto,
+    updatedAt: Date.now()
+  };
+
+  if (editingId) {
+    const idx = watches.findIndex(x => x.id === editingId);
+    watches[idx] = { ...watches[idx], ...data };
+    toast('Orologio aggiornato ✓', 'success');
+  } else {
+    data.id = 'w_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+    data.createdAt = Date.now();
+    watches.unshift(data);
+    toast('Orologio aggiunto ✓', 'success');
+  }
+
+  closeModal('addModal');
+  refresh();
+}
+
+// ─────────────────────────────────────────────
+//  DETAIL MODAL
+// ─────────────────────────────────────────────
+function openDetail(id) {
+  const w = watches.find(x => x.id === id);
+  if (!w) return;
+  document.getElementById('detailContent').innerHTML = `
+    <div class="detail-photo">
+      ${w.photo
+        ? `<img src="${w.photo}" alt="${w.brand}">`
+        : `<div style="height:220px; display:flex; align-items:center; justify-content:center; color:var(--text3)">
+             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+           </div>`}
+    </div>
+    <div class="detail-section">
+      <div class="detail-brand">${w.brand || '—'}</div>
+      <div class="detail-model">${w.model || 'Modello sconosciuto'}</div>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-item-label">Tipo</div><div class="detail-item-value">${capitalize(w.type || '—')}</div></div>
+        <div class="detail-item"><div class="detail-item-label">Batteria</div><div class="detail-item-value">${w.battery || '—'}</div></div>
+        <div class="detail-item"><div class="detail-item-label">Anno</div><div class="detail-item-value">${w.year || '—'}</div></div>
+        <div class="detail-item"><div class="detail-item-label">Valore</div><div class="detail-item-value">${w.value ? '€' + parseFloat(w.value).toLocaleString('it') : '—'}</div></div>
+      </div>
+      ${w.notes ? `<div class="detail-notes">${w.notes.replace(/\n/g,'<br>')}</div>` : ''}
+    </div>
+    <div class="detail-actions">
+      <button class="btn btn-ghost" style="flex:1" onclick="confirmDelete('${w.id}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Elimina
+      </button>
+      <button class="btn btn-gold" style="flex:2" onclick="openEditModal('${w.id}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Modifica
+      </button>
+    </div>`;
+  document.getElementById('detailModal').style.display = 'flex';
+}
+
+function confirmDelete(id) {
+  if (confirm('Eliminare questo orologio dalla collezione?')) {
+    watches = watches.filter(w => w.id !== id);
+    closeModal('detailModal');
+    refresh();
+    toast('Orologio eliminato', '');
+  }
+}
+
+// ─────────────────────────────────────────────
+//  DRIVE PANEL
+// ─────────────────────────────────────────────
+function openDrivePanel() {
+  document.getElementById('driveModal').style.display = 'flex';
+}
+
+function driveSignIn() {
+  toast('Configura il tuo Google Client ID in config.js per abilitare Drive', 'error');
+  // Per implementare: seguire README.md allegato per configurare OAuth2
+}
+
+// ─────────────────────────────────────────────
+//  EXPORT / IMPORT JSON
+// ─────────────────────────────────────────────
+function exportJSON() {
+  const data = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), watches }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `watchvault_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Backup esportato ✓', 'success');
+}
+
+function importJSON(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      const incoming = parsed.watches || (Array.isArray(parsed) ? parsed : null);
+      if (!incoming) throw new Error('Formato non valido');
+      if (!confirm(`Importare ${incoming.length} orologi? I dati esistenti verranno SOSTITUITI.`)) return;
+      watches = incoming;
+      refresh();
+      closeModal('driveModal');
+      toast(`${incoming.length} orologi importati ✓`, 'success');
+    } catch(err) {
+      toast('Errore nel file JSON', 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ─────────────────────────────────────────────
+//  UTILS
+// ─────────────────────────────────────────────
+function save() {
+  try { localStorage.setItem('watchVault', JSON.stringify(watches)); } catch(e) {}
+}
+
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+function closeOnOverlay(e, id) {
+  if (e.target === e.currentTarget) closeModal(id);
+}
+
+function toast(msg, type='') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3100);
+}
+
+// ─────────────────────────────────────────────
+//  SERVICE WORKER REGISTRATION
+// ─────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+refresh();
+</script>
+</body>
+</html>
