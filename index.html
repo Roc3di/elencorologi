@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+  <script src="https://accounts.google.com/gsi/client" async></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0a0a" />
@@ -1036,8 +1037,26 @@ function openDrivePanel() {
   document.getElementById('driveModal').style.display = 'flex';
 }
 
+const GOOGLE_CLIENT_ID = '445130892974-1hcch8lllf1ufcqpo22ep4k7e7kob7oj.apps.googleusercontent.com';
+
 function driveSignIn() {
-  toast('Configura il tuo Google Client ID in config.js per abilitare Drive', 'error');
+  const tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: (resp) => {
+      if (resp.access_token) {
+        driveToken = resp.access_token;
+        document.getElementById('driveDot').classList.add('connected');
+        document.getElementById('driveStatusName').textContent = 'Connesso a Google Drive';
+        document.getElementById('driveStatusSub').textContent = 'Backup abilitato';
+        document.getElementById('driveActions').innerHTML = `
+          <button class="btn btn-gold" onclick="driveBackup()">Salva backup su Drive</button>
+          <button class="btn btn-ghost" onclick="driveRestore()">Ripristina da Drive</button>`;
+      }
+    }
+  });
+  tokenClient.requestAccessToken();
+}
   // Per implementare: seguire README.md allegato per configurare OAuth2
 }
 
